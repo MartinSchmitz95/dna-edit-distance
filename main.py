@@ -191,7 +191,7 @@ def analyze(q, x, ed):
 def get_args():
     parser = argparse.ArgumentParser(description="HyperParameters for String Embedding")
 
-    parser.add_argument("--dataset", type=str, default=None, help="dataset")
+    parser.add_argument("--dataset", type=str, default='shuffled_dna_strings_', help="dataset")  # 'shuffled_dna_strings'
     parser.add_argument("--nt", type=int, default=1000, help="# of training samples")
     parser.add_argument("--nr", type=int, default=1000, help="# of generated training samples")
     parser.add_argument("--nq", type=int, default=1000, help="# of query items")

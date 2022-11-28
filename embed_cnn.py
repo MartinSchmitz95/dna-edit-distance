@@ -55,15 +55,18 @@ def cnn_embedding(args, h, data_file):
     train_loader = TripletString(h.xt, h.nt, h.train_knn, h.train_dist, K=args.k)
 
     model_file = "{}/model.torch".format(data_file)
-    if os.path.isfile(model_file):
-        model = torch.load(model_file)
-    else:
-        start_time = time.time()
-        model = train_epoch(args, train_loader, device)
-        if args.save_model:
-            torch.save(model, model_file)
-        train_time = time.time() - start_time
-        print("# Training time: " + str(train_time))
+    #print("model: " , model_file)
+    #if os.path.isfile(model_file):  ### I dont want to load saved models
+    #    model = torch.load(model_file)
+    #else:
+    start_time = time.time()
+    model = train_epoch(args, train_loader, device)
+    print("loaded trained model")
+    if args.save_model:
+        torch.save(model, os.path.join("models", "model.pt"))
+        print("saved model")
+    train_time = time.time() - start_time
+    print("# Training time: " + str(train_time))
     model.eval()
 
     # check if we use bert here

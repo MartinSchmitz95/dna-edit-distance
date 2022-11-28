@@ -1,8 +1,6 @@
 import time
-
 from tqdm import tqdm
 from networks import *
-
 
 def train_epoch(args, train_set, device):
     N = len(train_set)
@@ -26,7 +24,7 @@ def train_epoch(args, train_set, device):
     elif args.dataset == "uniref":
         EmbeddingNet = UnirefCNN
     else:
-        EmbeddingNet = MultiLayerCNN
+        EmbeddingNet = MyCNN  # MultiLayerCNN  # TwoLayerCNN
 
     if args.epochs == 0 and args.dataset != "word":
         EmbeddingNet = RandomCNN
