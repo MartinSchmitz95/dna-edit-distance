@@ -27,63 +27,7 @@ class TwoLayerPool(nn.Module):
 
 		return x
 
-
-class MyCNN_s(nn.Module):
-	def __init__(self, C, M, embedding, channel, mtc_input):
-		super(MyCNN, self).__init__()
-
-		kernel = 3
-		base_channels = 32
-		pooling_size = 4
-		drop_out = 0.1
-
-		size = 128
-
-		# 1 x 128
-		self.conv1 = nn.Sequential(
-			nn.Conv1d(4, base_channels, kernel_size=kernel),
-			nn.BatchNorm1d(base_channels),
-			nn.ReLU(),
-			nn.MaxPool1d(pooling_size, stride=pooling_size))
-
-		# base_channel x 32
-		self.conv2 = nn.Sequential(
-			nn.Conv1d(base_channels, base_channels, kernel_size=kernel),
-			nn.BatchNorm1d(base_channels),
-			nn.ReLU(),
-			nn.MaxPool1d(pooling_size, stride=pooling_size))
-
-		# base_channel x 8
-		self.conv3 = nn.Sequential(
-			nn.Conv1d(base_channels, 2 * base_channels, kernel_size=kernel),
-			nn.BatchNorm1d(2 * base_channels),
-			nn.ReLU(),
-			nn.MaxPool1d(2, stride=2))
-
-		# base_channel x 4
-		self.conv4 = nn.Sequential(
-			nn.Conv1d(2 * base_channels, 4 * base_channels, kernel_size=3),
-			nn.ReLU(),
-			nn.MaxPool1d(2, stride=pooling_size),
-			nn.Dropout(drop_out))
-
-		# 4 x 4 x base_channel
-		self.fc = nn.Linear(4 * base_channels, embedding)
-		self.activation = nn.Sigmoid()
-
-
-	def forward(self, x):
-		#print(x.shape)
-		#x = x.view(x.shape[0], 1, -1)
-		out = self.conv1(x)
-		out = self.conv2(out)
-		out = self.conv3(out)
-		out = out.view(x.shape[0], out.size(1) * out.size(2))
-		logit = self.fc(out)
-		logit = self.activation(logit)
-
-		return logit
-class MyCNN(nn.Module):
+class MyCNN_(nn.Module):
 	def __init__(self, C, M, embedding, channel, mtc_input):
 		super(MyCNN, self).__init__()
 
@@ -130,10 +74,11 @@ class MyCNN(nn.Module):
 			nn.MaxPool1d(pooling_size, stride=2),
 			nn.Dropout(drop_out))
 
-		# 4 x 4 x base_channel
-		self.fc = nn.Linear(4 * base_channels, embedding)
+		# 4 x 4 x base_channel4 * base_channels * 2
+		self.fc1 = nn.Linear(4 * base_channels * 2, 4 * base_channels * 2)
+		self.fc2 = nn.Linear(4 * base_channels * 2, embedding)
 		self.activation = nn.Sigmoid()
-
+		#  RuntimeError: mat1 and mat2 shapes cannot be multiplied (655350x256 and 512x8)
 
 	def forward(self, x):
 		#print(x.shape)
@@ -144,11 +89,57 @@ class MyCNN(nn.Module):
 		out = self.conv4(out)
 		out = self.conv5(out)
 		out = out.view(x.shape[0], out.size(1) * out.size(2))
-		logit = self.fc(out)
+		out = self.fc1(out)
+		out = torch.relu(out)
+		logit = self.fc2(out)
 		logit = self.activation(logit)
 
 		return logit
 
+class MyCNN(nn.Module):
+	def __init__(self, C, M, embedding, channel, mtc_input):
+		super(MyCNN, self).__init__()
+		self.C = C
+		self.M = M
+		self.embedding = embedding
+		self.mtc_input = 4
+		channel = 128
+
+		self.conv = nn.Sequential(
+			nn.Conv1d(self.mtc_input, channel, 3, 1, padding=1, bias=False),
+			POOL(2),
+			nn.Conv1d(channel, channel, 3, 1, padding=1, bias=False),
+			POOL(2),
+			nn.Conv1d(channel, channel, 3, 1, padding=1, bias=False),
+			POOL(2),
+			nn.Conv1d(channel, channel, 3, 1, padding=1, bias=False),
+			POOL(2),
+			nn.Conv1d(channel, channel, 3, 1, padding=1, bias=False),
+			POOL(2),
+			nn.Conv1d(channel, channel, 3, 1, padding=1, bias=False),
+			POOL(2),
+			#nn.Conv1d(channel, channel, 3, 1, padding=1, bias=False),
+			#POOL(2),
+		)
+
+		# Size after pooling
+		print(M, C, self.mtc_input, channel)  # 114 4 1 8  # 30 26 1 8
+		self.flat_size = channel #M // 1024 * C // self.mtc_input * channel
+		print("# self.flat_size ", self.flat_size)
+		self.fc2 = nn.Linear(self.flat_size, self.flat_size)
+		self.fc1 = nn.Linear(self.flat_size, embedding)
+
+	def forward(self, x: torch.Tensor):
+		#N = len(x)
+		#x = x.view(-1, 4, self.M)
+		x = self.conv(x)
+		# print(x.size())
+		x = x.view(x.shape[0], x.shape[1] * x.shape[2])
+		x = self.fc2(x)
+		x = torch.relu(x)
+		x = self.fc1(x)
+
+		return x
 
 class MultiLayerCNN(nn.Module):
 	def __init__(self, C, M, embedding, channel, mtc_input):

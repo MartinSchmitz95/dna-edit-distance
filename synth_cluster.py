@@ -9,11 +9,11 @@ import numpy as np
 
 
 def to_one_hot(data): # returns list of tuples (2D-tensor, string)
-    one_hot_strands = torch.zeros(len(data), 4, 120)
+    one_hot_strands = torch.zeros(len(data), 4, 125)
 
     for s, strand in enumerate(data):
         for i, nucleotide in enumerate(strand):
-            if i<=119:
+            if i<=124:
                 if nucleotide == 'A':
                     one_hot_strands[s,0,i] = 1
                 if nucleotide == 'T':
@@ -62,7 +62,7 @@ def create_files(args, cluster_file, small_emb_file, large_emb_file):
 def global_clusters(args, small_emb_file, n_processors):
     with open(os.path.join(args.data_path,f'{small_emb_file}.p'), 'rb') as handle:
         embs = pickle.load(handle)
-    clusters = KMeans(n_clusters=n_processors, max_iter=10).fit(embs).labels_
+    clusters = KMeans(n_clusters=n_processors, max_iter=3).fit(embs).labels_
     return clusters
 
 def local_clusters(args, cluster_indices, large_emb_file, n_processors):
@@ -141,7 +141,7 @@ def get_args():
     #parser.add_argument("--data_samples", type=str, default='clustered-nanopore-reads-dataset/test_split_2/test_Clusters.txt', help="dataset")
     #parser.add_argument("--data_samples", type=str, default='data/synth_data_DNA_storage/cat_naive_P0.06_N10/UnderlyingClusters.txt', help="dataset")
     #parser.add_argument("--data_samples", type=str, default='cat_naive_P0.01_N10/UnderlyingClusters.txt', help="dataset")
-    parser.add_argument("--data_samples", type=str, default='data/clustered-nanopore-reads-dataset/Clusters.txt', help="dataset")
+    parser.add_argument("--data_samples", type=str, default='data/synth_data_DNA_storage/cat_naive_P0.03_N10/NoisyStrands.txt', help="dataset")
 
     parser.add_argument("--data_path", type=str, default='out_data', help="-")
     parser.add_argument("--model_small", type=str, default='models/emb8.pt', help="model")  # 'shuffled_dna_strings'
@@ -152,11 +152,11 @@ def get_args():
 
 if __name__ == "__main__":
     args = get_args()
-    n_processors = 256
-    #create_files(args, "testset_real_clusters", "testset_8_embs", "testset_64_embs")
+    n_processors = 128
+    create_files(args, "synth_6_full", "synth_p3_8_embs", "synth_p3_128_embs")
     #create_files(args, "real_full", "real_full_8_embs", "real_full_128_embs")
 
-    parallel_clustering(args, n_processors, "real_full", "real_full_8_embs", "real_full_128_embs")
+    parallel_clustering(args, n_processors, "synth_6_full", "synth_p3_8_embs", "synth_p3_128_embs")
     #simple_clustering(args, "synth01_real_clusters", "synth01_64_embs")
     #simple_clustering(args, "real_full", "real_full_128_embs")
 
